@@ -4,35 +4,52 @@ import { Button, Row, Col, ListGroup, Card, Image } from "react-bootstrap";
 import { useDispatch, useSelector } from "react-redux";
 import Message from "../components/Message";
 import CheckOutSteps from "../components/CheckoutSteps";
-import { createOrder } from '../actions/orderActions'
+import { createOrder } from "../actions/orderActions";
+import { USER_DETAILS_RESET } from "../constants/userConstants";
+import { ORDER_CREATE_RESET } from "../constants/orderConstants";
 
-const PlaceOrderScreen = ({history}) => {
+const PlaceOrderScreen = ({ history }) => {
   const dispatch = useDispatch();
 
   const cart = useSelector((state) => state.cart);
 
+  if (!cart.shippingAddress.address) {
+    history.push("/shipping");
+  } else if (!cart.paymentMethod) {
+    history.push("/payment");
+  }
+
   // Calculate prices
-    const addDecimals = (num) => {
-        return (Math.round(num * 100)/100).toFixed(2)
-    }
+  const addDecimals = (num) => {
+    return (Math.round(num * 100) / 100).toFixed(2);
+  };
 
-  cart.itemsPrice = addDecimals(cart.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0))
-  cart.shippingPrice = addDecimals(cart.itemsPrice > 500 ? 0 : 50)
-  cart.taxPrice = addDecimals(Number((0.15 * cart.itemsPrice).toFixed(2)))
-  cart.totalPrice = (Number(cart.itemsPrice) + Number(cart.shippingPrice) + Number(cart.taxPrice)).toFixed(2)
+  cart.itemsPrice = addDecimals(
+    cart.cartItems.reduce((acc, item) => acc + item.price * item.qty, 0)
+  );
+  cart.shippingPrice = addDecimals(cart.itemsPrice > 500 ? 0 : 50);
+  cart.taxPrice = addDecimals(Number((0.15 * cart.itemsPrice).toFixed(2)));
+  cart.totalPrice = (
+    Number(cart.itemsPrice) +
+    Number(cart.shippingPrice) +
+    Number(cart.taxPrice)
+  ).toFixed(2);
 
-  const orderCreate = useSelector(state => state.orderCreate)
-  const { order, success, error } = orderCreate
+  const orderCreate = useSelector((state) => state.orderCreate);
+  const { order, success, error } = orderCreate;
 
   useEffect(() => {
-    if(success){
-      history.push(`/order/${order._id}`)
+    if (success) {
+      history.push(`/order/${order._id}`);
+      dispatch({ type: USER_DETAILS_RESET });
+      dispatch({ type: ORDER_CREATE_RESET });
     }
     // eslint-disable-next-line
-  }, [history, success])
+  }, [history, success]);
 
   const placeOrderHandler = () => {
-      dispatch(createOrder({
+    dispatch(
+      createOrder({
         orderItems: cart.cartItems,
         shippingAddress: cart.shippingAddress,
         paymentMethod: cart.paymentMethod,
@@ -40,8 +57,9 @@ const PlaceOrderScreen = ({history}) => {
         shippingPrice: cart.shippingPrice,
         taxPrice: cart.taxPrice,
         totalPrice: cart.totalPrice,
-      }))
-  }
+      })
+    );
+  };
 
   return (
     <>
@@ -101,48 +119,55 @@ const PlaceOrderScreen = ({history}) => {
           </ListGroup>
         </Col>
         <Col md={4}>
-            <Card>
-                <ListGroup>
-                    <ListGroup.Item>
-                        <h2>Order Summary</h2>
-                    </ListGroup.Item>
-                    <ListGroup.Item>
-                        <Row>
-                            <Col>Items</Col>
-                            <Col>${cart.itemsPrice}</Col>
-                        </Row>
-                    </ListGroup.Item>
+          <Card>
+            <ListGroup>
+              <ListGroup.Item>
+                <h2>Order Summary</h2>
+              </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>Items</Col>
+                  <Col>${cart.itemsPrice}</Col>
+                </Row>
+              </ListGroup.Item>
 
-                    <ListGroup.Item>
-                        <Row>
-                            <Col>Shipping</Col>
-                            <Col>${cart.shippingPrice}</Col>
-                        </Row>
-                    </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>Shipping</Col>
+                  <Col>${cart.shippingPrice}</Col>
+                </Row>
+              </ListGroup.Item>
 
-                    <ListGroup.Item>
-                        <Row>
-                            <Col>Tax</Col>
-                            <Col>${cart.taxPrice}</Col>
-                        </Row>
-                    </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>Tax</Col>
+                  <Col>${cart.taxPrice}</Col>
+                </Row>
+              </ListGroup.Item>
 
-                    <ListGroup.Item>
-                        <Row>
-                            <Col>Total</Col>
-                            <Col>${cart.totalPrice}</Col>
-                        </Row>
-                    </ListGroup.Item>
+              <ListGroup.Item>
+                <Row>
+                  <Col>Total</Col>
+                  <Col>${cart.totalPrice}</Col>
+                </Row>
+              </ListGroup.Item>
 
-                    <ListGroup.Item>
-                      {error && <Message variant='danger'>{error}</Message>}
-                    </ListGroup.Item>
+              <ListGroup.Item>
+                {error && <Message variant="danger">{error}</Message>}
+              </ListGroup.Item>
 
-                    <ListGroup.Item>
-                        <Button type='button' className='btn-block' disabled={cart.cartItems === 0} onClick={placeOrderHandler}>Place Order</Button>
-                    </ListGroup.Item>
-                </ListGroup>
-            </Card>
+              <ListGroup.Item>
+                <Button
+                  type="button"
+                  className="btn-block"
+                  disabled={cart.cartItems === 0}
+                  onClick={placeOrderHandler}
+                >
+                  Place Order
+                </Button>
+              </ListGroup.Item>
+            </ListGroup>
+          </Card>
         </Col>
       </Row>
     </>
